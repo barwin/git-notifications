@@ -77,18 +77,17 @@ function cloneRepoIfNotExists(repoUrl, callback) {
             new Git().exec('clone', { bare: true, depth: 1 }, [ repoUrl, localRepoPath ], function(err, msg) {
                 if (err) {
                     console.error("Failed to clone repo: " + repoUrl + ":", err);
-                    doCallback(callback, [err]);
                 }
                 else {
                     console.log("Successfully cloned repo: %s", localRepoPath, msg);
                 }
+                doCallback(callback, [err]);
             });
         }
         else {
             console.log("Repo already exists: " + localRepoPath);
+            doCallback(callback);
         }
-
-        doCallback(callback);
     });
 }
 
