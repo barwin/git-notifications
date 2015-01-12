@@ -85,7 +85,6 @@ function cloneRepoIfNotExists(repoUrl, callback) {
             });
         }
         else {
-            console.log("Repo already exists: " + localRepoPath);
             doCallback(callback);
         }
     });
@@ -125,7 +124,7 @@ function checkForNewCommits(repoUrl, callback) {
         .then(function(done, localSha1, remoteSha1) {
             if (localSha1 === remoteSha1) {
                 // no new commits
-                console.log("no new commits");
+                console.log("No new commits found for " + path.basename(repoUrl));
                 done();
             }
             else {
