@@ -121,7 +121,7 @@ function checkForNewCommits(repoUrl, callback) {
                     var remoteSha1 = remoteSha1Line.split(/\s/)[0];
                     done(localSha1, remoteSha1);
                 }
-            })
+            });
         })
         .then(function(done, localSha1, remoteSha1) {
             if (localSha1 === remoteSha1) {
