@@ -4,10 +4,11 @@ var ASQ = require('asynquence'),
     Convert = require('ansi-to-html'),
     convert = new Convert(),
     fs = require('fs'),
-    Email = require('email').Email,
+    nodemailer = require('nodemailer'),
     Git = require('git-wrapper'),
     path = require('path'),
-    _ = require('underscore');
+    _ = require('underscore'),
+    mailTransporter;
 
 // Local path where we will clone and track repos.
 var REPO_JAIL = __dirname + '/var',
@@ -44,18 +45,20 @@ _.each(config.get('repoList'), function(repo) {
             });
         })
         .then(function(done, ansiLogAndDiff, remoteSha1) {
-            sendEmailNotification(repoUrl, ansiLogAndDiff, remoteSha1, function(err) {
+            sendEmailNotification(repoUrl, ansiLogAndDiff, remoteSha1, function(err, info) {
                 if (err) {
                     console.error("Failed to send email:", err);
                     done.fail(err);
                 }
                 else {
+                    console.log("Email sent: " + info.response);
                     done();
                 }
             });
         })
         .or(function(err) {
             console.error("Bailing out on repo %s:", repoUrl, err);
+            throw err;
         });
 });
 
@@ -183,15 +186,22 @@ function sendEmailNotification(repoUrl, ansiLogAndDiff, remoteSha1, callback) {
 
     // Send email!
     console.log("Sending email from=%s to=%s", EMAIL_FROM, EMAIL_TO);
-    var msg = new Email({
+    var mailOptions = {
         from: EMAIL_FROM,
         to: EMAIL_TO,
         subject: "[Git] new commits in " + path.basename(repoUrl) + " " + remoteSha1.substring(0,8),
-        body: htmlBody,
-        bodyType: 'html'
-    });
+        html: htmlBody
+    };
 
-    msg.send(callback);
+    if (mailTransporter === undefined) {
+        // Initialize mailTransporter on first use.
+
+        // Clone smtpOptions get a non-read-only object.
+        // (Nodemailer needs to write to the object).
+        mailTransporter = nodemailer.createTransport(_.clone(config.get('email.smtpOptions')));
+    }
+
+    mailTransporter.sendMail(mailOptions, callback);
 }
 
 

@@ -17,7 +17,17 @@ For Example:
 
         email: {
             from: 'user@domain',
-            to: 'your@recipients'
+            to: 'your@recipients, another@recipient',
+
+            // https://github.com/andris9/nodemailer-smtp-transport#usage
+            smtpOptions: {
+                host: 'localhost',
+                port: 25,
+                auth: {
+                    user: 'username',
+                    pass: 'password'
+                }
+            }
         }
     };
 
