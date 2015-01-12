@@ -1,3 +1,3 @@
 # Git Notifier
 
-Watch our repos and send commit notifications via email.
+Watch git repos and send commit notifications (with diffs) via email.
