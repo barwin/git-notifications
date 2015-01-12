@@ -36,3 +36,9 @@ For Example:
 Just run the script with node:
 
     node .
+
+## Debugging
+
+You can see debug output by setting the ```DEBUG``` environment variable. E.g.
+
+    DEBUG=* node .

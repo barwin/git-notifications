@@ -3,6 +3,7 @@ var ASQ = require('asynquence'),
     config = require('config'),
     Convert = require('ansi-to-html'),
     convert = new Convert(),
+    debug = require('debug')('git_poller'),
     fs = require('fs'),
     nodemailer = require('nodemailer'),
     Git = require('git-wrapper'),
@@ -18,7 +19,7 @@ var REPO_JAIL = __dirname + '/var',
 
 _.each(config.get('repoList'), function(repo) {
     var repoUrl = repo.gitUrl;
-    console.log(repoUrl + " => ", path.basename(repoUrl));
+    debug(repoUrl + " => ", path.basename(repoUrl));
 
     ASQ(repoUrl).
         then(function(done, repoUrl) {
@@ -51,7 +52,7 @@ _.each(config.get('repoList'), function(repo) {
                     done.fail(err);
                 }
                 else {
-                    console.log("Email sent: " + info.response);
+                    debug("Email sent: " + info.response);
                     done();
                 }
             });
@@ -76,13 +77,13 @@ function cloneRepoIfNotExists(repoUrl, callback) {
 
     fs.exists(localRepoPath, function(exists) {
         if (!exists) {
-            console.log("Repo " + repoUrl + " does not exist locally yet. Cloning to " + localRepoPath);
+            debug("Repo " + repoUrl + " does not exist locally yet. Cloning to " + localRepoPath);
             new Git().exec('clone', { bare: true, depth: 1 }, [ repoUrl, localRepoPath ], function(err, msg) {
                 if (err) {
                     console.error("Failed to clone repo: " + repoUrl + ":", err);
                 }
                 else {
-                    console.log("Successfully cloned repo: %s", localRepoPath, msg);
+                    debug("Successfully cloned repo: %s", localRepoPath, msg);
                 }
                 doCallback(callback, [err]);
             });
@@ -127,12 +128,12 @@ function checkForNewCommits(repoUrl, callback) {
         .then(function(done, localSha1, remoteSha1) {
             if (localSha1 === remoteSha1) {
                 // no new commits
-                console.log("No new commits found for " + path.basename(repoUrl));
+                debug("No new commits found for " + path.basename(repoUrl));
                 done();
             }
             else {
                 // We have new commits!
-                console.log("There are new commits!");
+                debug("There are new commits!");
                 // Fetch, log, and diff
                 git.exec('fetch', {}, [ 'origin', 'master:master' ], function(err) {
                     if (err) { done.fail(err); }
@@ -185,7 +186,7 @@ function sendEmailNotification(repoUrl, ansiLogAndDiff, remoteSha1, callback) {
     var htmlBody = convert.toHtml(ansiLogAndDiff).replace(/\n/g, '\n<br>');
 
     // Send email!
-    console.log("Sending email from=%s to=%s", EMAIL_FROM, EMAIL_TO);
+    debug("Sending email from=%s to=%s", EMAIL_FROM, EMAIL_TO);
     var mailOptions = {
         from: EMAIL_FROM,
         to: EMAIL_TO,
