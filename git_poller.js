@@ -30,11 +30,11 @@ _.each(config.get('repoList'), function(repo) {
             });
         })
         .then(function(done) {
-            checkForNewCommits(repoUrl, function(err, ansiLogAndDiff) {
+            checkForNewCommits(repoUrl, function(err, ansiLogAndDiff, remoteSha1) {
                 if (err) { done.fail(err); }
                 else {
                     if (ansiLogAndDiff) {
-                        done(ansiLogAndDiff);
+                        done(ansiLogAndDiff, remoteSha1);
                     }
                     else {
                         // Nothing left to do if there is no diff.
@@ -43,8 +43,8 @@ _.each(config.get('repoList'), function(repo) {
                 }
             });
         })
-        .then(function(done, ansiLogAndDiff) {
-            sendEmailNotification(repoUrl, ansiLogAndDiff, function(err) {
+        .then(function(done, ansiLogAndDiff, remoteSha1) {
+            sendEmailNotification(repoUrl, ansiLogAndDiff, remoteSha1, function(err) {
                 if (err) {
                     console.error("Failed to send email:", err);
                     done.fail(err);
@@ -136,13 +136,14 @@ function checkForNewCommits(repoUrl, callback) {
                 git.exec('fetch', {}, [ 'origin', 'master:master' ], function(err) {
                     if (err) { done.fail(err); }
                     else {
-                        // Git 'log' and 'diff' take the same flags/args. So define here for convenience.
+                        // Git 'log' and 'diff' take [mostly] the same flags/args.
+                        // So define here for convenience.
                         var gitOpts = { color: true, paginate: false},
                             gitArgs = [ localSha1+".."+remoteSha1 ];
 
                         async.parallel([
                             function(cb) {
-                                git.exec('log', gitOpts, gitArgs, cb);
+                                git.exec('log', _.extend(_.clone(gitOpts), { stat: true }), gitArgs, cb);
                             },
                             function(cb) {
                                 git.exec('diff', gitOpts, gitArgs, cb);
@@ -154,15 +155,15 @@ function checkForNewCommits(repoUrl, callback) {
 
                             if (err) { done.fail(err); }
                             else {
-                                done(ansiLog + "\n\n" + ansiDiff);
+                                done(ansiLog + "\n\n" + ansiDiff, remoteSha1);
                             }
                         });
                     }
                 });
             }
         })
-        .val(function(ansiLogAndDiff) {
-            doCallback(callback, [null, ansiLogAndDiff]);
+        .val(function(ansiLogAndDiff, remoteSha1) {
+            doCallback(callback, [null, ansiLogAndDiff, remoteSha1]);
         })
         .or(function(err) {
             doCallback(callback, [err]);
@@ -175,9 +176,10 @@ function checkForNewCommits(repoUrl, callback) {
  *
  * @param {string} repoUrl
  * @param {string} ansiLogAndDiff
+ * @param {string} remoteSha1
  * @param {function} callback
  */
-function sendEmailNotification(repoUrl, ansiLogAndDiff, callback) {
+function sendEmailNotification(repoUrl, ansiLogAndDiff, remoteSha1, callback) {
     // ansi-to-html doesn't include line breaks, so we must add those ourselves.
     var htmlBody = convert.toHtml(ansiLogAndDiff).replace(/\n/g, '\n<br>');
 
@@ -186,7 +188,7 @@ function sendEmailNotification(repoUrl, ansiLogAndDiff, callback) {
     var msg = new Email({
         from: EMAIL_FROM,
         to: EMAIL_TO,
-        subject: "[Git] new commits in " + path.basename(repoUrl),
+        subject: "[Git] new commits in " + path.basename(repoUrl) + " " + remoteSha1.substring(0,8),
         body: htmlBody,
         bodyType: 'html'
     });
