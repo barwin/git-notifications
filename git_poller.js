@@ -1,6 +1,6 @@
 var ASQ = require('asynquence'),
     config = require('config'),
-    debug = require('debug')('git_poller'),
+    debug = require('debug')('gitnotifier:git_poller'),
     path = require('path'),
     _ = require('underscore');
 
