@@ -16,7 +16,10 @@ _.each(config.get('repoList'), function(repo) {
         then(function(done, repoUrl) {
             // Check that repo is checked out in our 'jail'
             gitNotifier.cloneRepoIfNotExists(repoUrl, function(err) {
-                if (err) { done.fail(err); }
+                if (err) {
+                    console.error("Failed to clone repo: " + repoUrl + ":", err);
+                    done.fail(err);
+                }
                 else {
                     done();
                 }
