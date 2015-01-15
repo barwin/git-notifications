@@ -3,7 +3,7 @@ require('should');
 var assert = require('assert'),
     ASQ = require('asynquence'),
     fs = require('fs'),
-    Git = require('git-wrapper'),
+    Git = require('../lib/git-wrapper-local'),
     temp = require('temp');
 
 // Automatically track and cleanup files at exit
