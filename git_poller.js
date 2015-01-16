@@ -10,7 +10,7 @@ var GitNotifier = require('./lib/gitNotifier'),
 
 _.each(config.get('repoList'), function(repo) {
     var repoUrl = repo.gitUrl;
-    debug(repoUrl + " => ", path.basename(repoUrl));
+    debug(repoUrl + " => " + path.basename(repoUrl));
 
     ASQ(repoUrl).
         then(function(done, repoUrl) {
