@@ -4,7 +4,7 @@
   "description": "Send git commit notifications",
   "main": "git_poller.js",
   "scripts": {
-    "test": "mocha"
+    "test": "NODE_ENV=testing mocha"
   },
   "keywords": [
     "git"

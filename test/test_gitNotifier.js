@@ -9,6 +9,11 @@ var assert = require('assert'),
 // Automatically track and cleanup files at exit
 temp.track();
 
+// Set NODE_ENV so that config/local-testing.js is loaded.
+if (!process.env.NODE_ENV) {
+    process.env.NODE_ENV = 'testing';
+}
+
 describe('lib/gitNotifier', function() {
     var GitNotifier = require('../lib/gitNotifier'),
         gitNotifier;

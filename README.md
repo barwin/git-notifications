@@ -42,3 +42,7 @@ Just run the script with node:
 You can see debug output by setting the ```DEBUG``` environment variable. E.g.
 
     DEBUG=* node .
+
+## Run Tests
+
+    npm test
