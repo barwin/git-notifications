@@ -53,6 +53,5 @@ _.each(config.get('repoList'), function(repo) {
         })
         .or(function(err) {
             console.error("Bailing out on repo %s:", repoUrl, err);
-            throw err;
         });
 });
