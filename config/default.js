@@ -3,6 +3,8 @@ module.exports = {
 
     ],
 
+    tabsToSpaces: 4,
+
     email: {
 
         to: undefined,

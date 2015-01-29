@@ -15,6 +15,8 @@ For Example:
             { gitUrl: 'git@private:/repo.git' }
         ],
 
+        tabsToSpaces: 4,
+
         email: {
             from: 'user@domain',
             to: 'your@recipients, another@recipient',
