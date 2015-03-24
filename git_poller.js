@@ -26,11 +26,11 @@ _.each(config.get('repoList'), function(repo) {
             });
         })
         .then(function(done) {
-            gitNotifier.checkForNewCommits(repoUrl, function(err, ansiLogAndDiff, remoteSha1) {
+            gitNotifier.checkForNewCommits(repoUrl, function(err, ansiLogAndDiff, localSha1, remoteSha1) {
                 if (err) { done.fail(err); }
                 else {
                     if (ansiLogAndDiff) {
-                        done(ansiLogAndDiff, remoteSha1);
+                        done(ansiLogAndDiff, localSha1, remoteSha1);
                     }
                     else {
                         // Nothing left to do if there is no diff.
@@ -39,8 +39,8 @@ _.each(config.get('repoList'), function(repo) {
                 }
             });
         })
-        .then(function(done, ansiLogAndDiff, remoteSha1) {
-            gitNotifier.sendEmailNotification(repoUrl, ansiLogAndDiff, remoteSha1, function(err, info) {
+        .then(function(done, ansiLogAndDiff, localSha1, remoteSha1) {
+            gitNotifier.sendEmailNotification(repoUrl, ansiLogAndDiff, localSha1, remoteSha1, function(err, info) {
                 if (err) {
                     console.error("Failed to send email:", err);
                     done.fail(err);

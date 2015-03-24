@@ -119,7 +119,7 @@ describe('lib/gitNotifier', function() {
         });
 
         it('should not find new commits with an initial clone repo', function(done) {
-            gitNotifier.checkForNewCommits(tmpRepoOriginPath, function(err, diff, latestSha1) {
+            gitNotifier.checkForNewCommits(tmpRepoOriginPath, function(err, diff, localSha1, latestSha1) {
                 assert.ifError(err);
                 assert.equal(diff, undefined, 'Diff should be undefined');
                 assert.equal(latestSha1, undefined, 'LatestSha1 should be undefined');
@@ -139,7 +139,7 @@ describe('lib/gitNotifier', function() {
         });
 
         it('should find new commits', function(done) {
-            gitNotifier.checkForNewCommits(tmpRepoOriginPath, function(err, diff, latestSha1) {
+            gitNotifier.checkForNewCommits(tmpRepoOriginPath, function(err, diff, localSha1, latestSha1) {
                 assert.ifError(err);
                 diff.should.be.type('string');
                 latestSha1.should.be.type('string');
@@ -147,6 +147,56 @@ describe('lib/gitNotifier', function() {
             });
         });
 
+    });
+
+    describe('isGitHubRepo', function() {
+        it('should return true for github repos', function() {
+            [
+                'https://github.com/barwin/git-notifications.git',
+                'https://github.com/barwin/git-notifications',
+                'git@github.com:barwin/git-notifications.git'
+            ]
+                .forEach(function(repoUrl) {
+                    assert.ok(gitNotifier.isGitHubRepo(repoUrl), 'true for github repo: ' + repoUrl);
+                });
+        });
+
+        it('should return false for non-github repos', function() {
+            [
+                'file:///Users/barwin/sites/test_repo',
+                'git@bitbucket.org:testuser/test_repo.git',
+                'https://testuser@bitbucket.org/testuser/notify_bot.git'
+            ]
+                .forEach(function(repoUrl) {
+                    assert.equal(gitNotifier.isGitHubRepo(repoUrl), false, 'false for non-github repo: ' + repoUrl);
+                });
+        });
+    });
+
+    describe('getGitHubWebDiffUrl', function() {
+
+        var expectedCompareUrl = 'https://github.com/barwin/git-notifications/compare/foo...bar';
+
+        it('should get urls for ssh repoUrls', function() {
+            assert.equal(
+                gitNotifier.getGitHubWebDiffUrl('git@github.com:barwin/git-notifications.git', 'foo', 'bar'),
+                expectedCompareUrl
+            )
+        });
+
+        it('should get urls for https repoUrls with .git extension', function() {
+            assert.equal(
+                gitNotifier.getGitHubWebDiffUrl('https://github.com/barwin/git-notifications.git', 'foo', 'bar'),
+                expectedCompareUrl
+            )
+        });
+
+        it('should get urls for https repoUrls without .git extension', function() {
+            assert.equal(
+                gitNotifier.getGitHubWebDiffUrl('https://github.com/barwin/git-notifications', 'foo', 'bar'),
+                expectedCompareUrl
+            )
+        });
     });
 
     describe.skip('sendEmailNotification', function() {
