@@ -1,6 +1,6 @@
 {
   "name": "git_notifier",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Send git commit notifications",
   "main": "git_poller.js",
   "scripts": {
