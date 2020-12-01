@@ -1,0 +1,19 @@
+{
+  "env": {
+    "mocha": true
+  },
+  "plugins": [
+    "mocha"
+  ],
+  "rules": {
+    "func-names": [0],
+    "global-require": [0],
+    "import/newline-after-import": [0],
+    "import/no-extraneous-dependencies": ["error", {"devDependencies": true} ],
+    "mocha/no-exclusive-tests": [2],
+    "mocha/no-pending-tests": [2],
+    "mocha/handle-done-callback": [2],
+    "no-console": [2, { "allow": ["warn", "error"] }],
+    "prefer-arrow-callback": [0]
+  }
+}
