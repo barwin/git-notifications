@@ -1,23 +1,23 @@
-var ASQ = require('asynquence'),
-    config = require('config'),
-    debug = require('debug')('gitnotifier:git_poller'),
-    path = require('path'),
-    _ = require('underscore');
+const ASQ = require('asynquence');
+const config = require('config');
+const debug = require('debug')('gitnotifier:git_poller');
+const path = require('path');
+const _ = require('underscore');
 
-var GitNotifier = require('./lib/gitNotifier'),
-    gitNotifier = new GitNotifier();
+const GitNotifier = require('./lib/gitNotifier');
 
+const gitNotifier = new GitNotifier();
 
-_.each(config.get('repoList'), function(repo) {
-    var repoUrl = repo.gitUrl;
-    debug(repoUrl + " => " + path.basename(repoUrl));
+_.each(config.get('repoList'), (repo) => {
+    const repoUrl = repo.gitUrl;
+    debug(`${repoUrl} => ${path.basename(repoUrl)}`);
 
-    ASQ(repoUrl).
-        then(function(done, repoUrl) {
+    ASQ()
+        .then((done) => {
             // Check that repo is checked out in our 'jail'
-            gitNotifier.cloneRepoIfNotExists(repoUrl, function(err) {
+            gitNotifier.cloneRepoIfNotExists(repoUrl, (err) => {
                 if (err) {
-                    console.error("Failed to clone repo: " + repoUrl + ":", err);
+                    console.error(`Failed to clone repo: ${repoUrl}:`, err);
                     done.fail(err);
                 }
                 else {
@@ -35,19 +35,19 @@ _.each(config.get('repoList'), function(repo) {
                 done.abort();
             }
         })
-        .then(function(done, ansiLogAndDiff, localSha1, remoteSha1) {
-            gitNotifier.sendEmailNotification(repoUrl, ansiLogAndDiff, localSha1, remoteSha1, function(err, info) {
+        .then((done, ansiLogAndDiff, localSha1, remoteSha1) => {
+            gitNotifier.sendEmailNotification(repoUrl, ansiLogAndDiff, localSha1, remoteSha1, (err, info) => {
                 if (err) {
-                    console.error("Failed to send email:", err);
+                    console.error('Failed to send email:', err);
                     done.fail(err);
                 }
                 else {
-                    debug("Email sent: " + info.response);
+                    debug(`Email sent: ${info.response}`);
                     done();
                 }
             });
         })
-        .or(function(err) {
-            console.error("Bailing out on repo %s:", repoUrl, err);
+        .or((err) => {
+            console.error('Bailing out on repo %s:', repoUrl, err);
         });
 });
