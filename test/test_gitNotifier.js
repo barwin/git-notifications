@@ -1,7 +1,7 @@
 require('should');
 
 const assert = require('assert');
-const ASQ = require('asynquence');
+const Bluebird = require('bluebird');
 const fs = require('fs');
 const temp = require('temp');
 const Git = require('../lib/git-wrapper-local');
@@ -54,55 +54,26 @@ describe('lib/gitNotifier', function() {
         let tmpRepoOriginPath;
         const tmpRepoName = 'testRepo';
         let git;
+        let gitExec;
 
         /**
          * Initialize a local repo with a single commit.
          */
-        before(function(done) {
-            temp.mkdir('test_checkForNewCommits', function(err, tmpDirPath) {
-                tmpRepoOriginPath = `${tmpDirPath}/${tmpRepoName}`;
-                fs.mkdirSync(tmpRepoOriginPath);
-                git = new Git({ 'git-dir': `${tmpRepoOriginPath}/.git`, cwd: tmpRepoOriginPath });
+        before(async () => {
+            const tmpDirPath = await Bluebird.fromCallback(cb => temp.mkdir('test_checkForNewCommits', cb));
 
-                ASQ()
-                    .then(function(next) {
-                        new Git().exec('init', {}, [tmpRepoOriginPath], function(err) {
-                            if (err) {
-                                console.error('Error during git init');
-                                return next.fail(err);
-                            }
-                            next();
-                        });
-                    })
-                    .then(function(next) {
-                        // Repo is init'd, do an initial commit.
-                        fs.writeFileSync(`${tmpRepoOriginPath}/test.txt`, 'Hello World');
+            tmpRepoOriginPath = `${tmpDirPath}/${tmpRepoName}`;
+            fs.mkdirSync(tmpRepoOriginPath);
+            git = new Git({ 'git-dir': `${tmpRepoOriginPath}/.git`, cwd: tmpRepoOriginPath });
+            gitExec = (cmd, opts, args) => {
+                return Bluebird.fromCallback(cb => git.exec(cmd, opts, args, cb));
+            };
 
-                        git.exec('add', {}, ['test.txt'], function(err) {
-                            if (err) {
-                                console.error('Error during git add');
-                                return next.fail(err);
-                            }
-                            next();
-                        });
-                    })
-                    .then(function(next) {
-                        git.exec('commit', { m: "'First commit'" }, [], function(err) {
-                            if (err) {
-                                console.error('Error during git commit');
-                                return next.fail(err);
-                            }
-                            next();
-                        });
-                    })
-                    .val(function() {
-                        done(); // concludes before()
-                    })
-                    .or(function(err) {
-                        console.error(`Error during git commands: ${err}`);
-                        throw err;
-                    });
-            });
+            // Initialie repo and add an initial commit
+            await gitExec('init', {}, [tmpRepoOriginPath]);
+            fs.writeFileSync(`${tmpRepoOriginPath}/test.txt`, 'Hello World');
+            await gitExec('add', {}, ['test.txt']);
+            await gitExec('commit', { m: "'First commit'" }, []);
         });
 
         it('should clone local temp repo without error', function(done) {
@@ -124,18 +95,12 @@ describe('lib/gitNotifier', function() {
             });
         });
 
-        it('add a test commit to the test repo', function(done) {
+        it('should find new commits', async function(done) {
+            // Add a test commit that should get discovered
             fs.writeFileSync(`${tmpRepoOriginPath}/newfile`, 'a new file!');
-            git.exec('add', {}, ['newfile'], function(err) {
-                assert.ifError(err);
-                git.exec('commit', { m: "'Second Commit'" }, [], function(err) {
-                    assert.ifError(err);
-                    done();
-                });
-            });
-        });
+            await gitExec('add', {}, ['newfile']);
+            await gitExec('commit', { m: "'Second Commit'" }, []);
 
-        it('should find new commits', function(done) {
             gitNotifier.checkForNewCommits(tmpRepoOriginPath, function(err, diff, localSha1, latestSha1) {
                 assert.ifError(err);
                 diff.should.be.type('string');
