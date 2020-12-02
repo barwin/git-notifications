@@ -28,25 +28,26 @@ describe('lib/gitNotifier', function() {
     });
 
     describe('cloneRepoIfNotExists', function() {
-        it('should clone repo into REPO_JAIL dir', function(done) {
-            gitNotifier.cloneRepoIfNotExists('https://github.com/barwin/git-notifications.git', function(err) {
-                assert.ifError(err);
-                fs.exists(`${gitNotifier.REPO_JAIL}/git-notifications.git`, function(exists) {
-                    exists.should.equal(true);
-                    done();
-                });
-            });
+        it('should clone repo into REPO_JAIL dir', async () => {
+            await gitNotifier.cloneRepoIfNotExists('https://github.com/barwin/git-notifications.git');
+
+            const exists = fs.existsSync(`${gitNotifier.REPO_JAIL}/git-notifications.git`);
+            exists.should.equal(true);
         });
 
-        it('should throw an error when the repo does not exist', function(done) {
-            gitNotifier.cloneRepoIfNotExists('file:///noexist', function(err) {
+        it('should throw an error when the repo does not exist', async () => {
+            const unexpectedErrMessage = 'should not get here, unexpected error';
+            try {
+                await gitNotifier.cloneRepoIfNotExists('file:///noexist');
+                throw new Error(unexpectedErrMessage);
+            }
+            catch (err) {
                 err.should.be.instanceof(Error);
+                err.message.should.not.equal(unexpectedErrMessage);
+            }
 
-                fs.exists(`${gitNotifier.REPO_JAIL}/noexist`, function(exists) {
-                    exists.should.equal(false);
-                    done();
-                });
-            });
+            const exists = fs.existsSync(`${gitNotifier.REPO_JAIL}/noexist`);
+            exists.should.equal(false);
         });
     });
 
@@ -76,14 +77,10 @@ describe('lib/gitNotifier', function() {
             await gitExec('commit', { m: "'First commit'" }, []);
         });
 
-        it('should clone local temp repo without error', function(done) {
-            gitNotifier.cloneRepoIfNotExists(tmpRepoOriginPath, function(err) {
-                assert.ifError(err);
-                fs.exists(`${gitNotifier.REPO_JAIL}/${tmpRepoName}`, function(exists) {
-                    exists.should.equal(true);
-                    done();
-                });
-            });
+        it('should clone local temp repo without error', async () => {
+            await gitNotifier.cloneRepoIfNotExists(tmpRepoOriginPath);
+            const exists = fs.existsSync(`${gitNotifier.REPO_JAIL}/${tmpRepoName}`);
+            exists.should.equal(true);
         });
 
         it('should not find new commits with an initial clone repo', async () => {

@@ -13,8 +13,6 @@
   "license": "MIT",
   "dependencies": {
     "ansi-to-html": "^0.3.0",
-    "async": "^0.9.0",
-    "asynquence": "^0.5.5-b",
     "bluebird": "^3.7.2",
     "config": "^1.10.0",
     "debug": "^2.1.1",
