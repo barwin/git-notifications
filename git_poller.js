@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 const Bluebird = require('bluebird');
 const config = require('config');
 const debug = require('debug')('gitnotifier:git_poller');
