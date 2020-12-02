@@ -2,7 +2,7 @@
   "name": "git_notifier",
   "version": "0.1.0",
   "description": "Send formatted git commit notifications by Email",
-  "main": "git_poller.js",
+  "main": "gitPoller.js",
   "scripts": {
     "test": "NODE_ENV=testing mocha"
   },
