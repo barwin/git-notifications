@@ -2,7 +2,7 @@
 
 const Bluebird = require('bluebird');
 const config = require('config');
-const debug = require('debug')('gitnotifier:git_poller');
+const debug = require('debug')('gitnotifier:gitPoller');
 const path = require('path');
 
 const GitNotifier = require('./lib/gitNotifier');
