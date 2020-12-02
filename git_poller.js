@@ -25,19 +25,15 @@ _.each(config.get('repoList'), function(repo) {
                 }
             });
         })
-        .then(function(done) {
-            gitNotifier.checkForNewCommits(repoUrl, function(err, ansiLogAndDiff, localSha1, remoteSha1) {
-                if (err) { done.fail(err); }
-                else {
-                    if (ansiLogAndDiff) {
-                        done(ansiLogAndDiff, localSha1, remoteSha1);
-                    }
-                    else {
-                        // Nothing left to do if there is no diff.
-                        done.abort();
-                    }
-                }
-            });
+        .then(async (done) => {
+            const { ansiLogAndDiff, localSha1, remoteSha1 } = await gitNotifier.checkForNewCommits(repoUrl);
+            if (ansiLogAndDiff) {
+                done(ansiLogAndDiff, localSha1, remoteSha1);
+            }
+            else {
+                // Nothing left to do if there is no diff.
+                done.abort();
+            }
         })
         .then(function(done, ansiLogAndDiff, localSha1, remoteSha1) {
             gitNotifier.sendEmailNotification(repoUrl, ansiLogAndDiff, localSha1, remoteSha1, function(err, info) {

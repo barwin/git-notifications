@@ -86,27 +86,22 @@ describe('lib/gitNotifier', function() {
             });
         });
 
-        it('should not find new commits with an initial clone repo', function(done) {
-            gitNotifier.checkForNewCommits(tmpRepoOriginPath, function(err, diff, localSha1, latestSha1) {
-                assert.ifError(err);
-                assert.equal(diff, undefined, 'Diff should be undefined');
-                assert.equal(latestSha1, undefined, 'LatestSha1 should be undefined');
-                done();
-            });
+        it('should not find new commits with an initial clone repo', async () => {
+            const { ansiLogAndDiff, remoteSha1 } = await gitNotifier.checkForNewCommits(tmpRepoOriginPath);
+            assert.equal(ansiLogAndDiff, undefined, 'Diff should be undefined');
+            assert.equal(remoteSha1, undefined, 'LatestSha1 should be undefined');
         });
 
-        it('should find new commits', async function(done) {
+        it('should find new commits', async () => {
             // Add a test commit that should get discovered
             fs.writeFileSync(`${tmpRepoOriginPath}/newfile`, 'a new file!');
             await gitExec('add', {}, ['newfile']);
             await gitExec('commit', { m: "'Second Commit'" }, []);
 
-            gitNotifier.checkForNewCommits(tmpRepoOriginPath, function(err, diff, localSha1, latestSha1) {
-                assert.ifError(err);
-                diff.should.be.type('string');
-                latestSha1.should.be.type('string');
-                done();
-            });
+            const { ansiLogAndDiff, localSha1, remoteSha1 } = await gitNotifier.checkForNewCommits(tmpRepoOriginPath);
+            assert.ok(localSha1, 'localSha1 should be ok');
+            ansiLogAndDiff.should.be.type('string');
+            remoteSha1.should.be.type('string');
         });
     });
 
