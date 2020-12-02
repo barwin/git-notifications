@@ -1,24 +1,24 @@
 module.exports = {
-	repoList: [
+    repoList: [
 
-	],
+    ],
 
     tabsToSpaces: 4,
 
-	email: {
+    email: {
 
-		to: undefined,
-		from: undefined,
+        to: undefined,
+        from: undefined,
 
-		// See https://github.com/andris9/nodemailer-smtp-transport#usage
-		smtpOptions: {
-			host: 'localhost',
-			port: 25,
-			secure: false,
-			auth: {
-				user: 'username',
-				pass: 'password'
-			}
-		}
-	}
+        // See https://github.com/andris9/nodemailer-smtp-transport#usage
+        smtpOptions: {
+            host: 'localhost',
+            port: 25,
+            secure: false,
+            auth: {
+                user: 'username',
+                pass: 'password',
+            },
+        },
+    },
 };

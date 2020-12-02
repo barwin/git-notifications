@@ -6,7 +6,7 @@ module.exports = {
     tabsToSpaces: 4,
 
     // Restrict the size of the raw text (before converting to HTML).
-    ansiSizeLimitBytes: 1024*1000,
+    ansiSizeLimitBytes: 1024 * 1000,
 
     email: {
 
@@ -20,8 +20,8 @@ module.exports = {
             secure: false,
             auth: {
                 user: 'username',
-                pass: 'password'
-            }
-        }
-    }
+                pass: 'password',
+            },
+        },
+    },
 };
