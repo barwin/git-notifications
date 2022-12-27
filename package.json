@@ -14,19 +14,19 @@
   "dependencies": {
     "ansi-to-html": "^0.6.14",
     "bluebird": "^3.7.2",
-    "config": "^3.3.3",
-    "debug": "^4.3.1",
+    "config": "^3.3.8",
+    "debug": "^4.3.4",
     "html-entities": "^1.1.2",
-    "nodemailer": "^6.4.16",
+    "nodemailer": "^6.8.0",
     "underscore": "^1.7.0",
     "underscore.string": "^3.0.2"
   },
   "devDependencies": {
-    "eslint": "^7.14.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-mocha": "^8.0.0",
-    "mocha": "^8.2.1",
+    "eslint": "^8.30.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-mocha": "^10.1.0",
+    "mocha": "^10.2.0",
     "should": "^13.2.3",
     "temp": "^0.9.4"
   }
