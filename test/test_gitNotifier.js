@@ -1,10 +1,10 @@
 require('should');
 
-var assert = require('assert'),
-    ASQ = require('asynquence'),
-    fs = require('fs'),
-    Git = require('../lib/git-wrapper-local'),
-    temp = require('temp');
+const assert = require('assert');
+const Bluebird = require('bluebird');
+const fs = require('fs');
+const temp = require('temp');
+const Git = require('../lib/git-wrapper-local');
 
 // Automatically track and cleanup files at exit
 temp.track();
@@ -15,8 +15,8 @@ if (!process.env.NODE_ENV) {
 }
 
 describe('lib/gitNotifier', function() {
-    var GitNotifier = require('../lib/gitNotifier'),
-        gitNotifier;
+    const GitNotifier = require('../lib/gitNotifier');
+    let gitNotifier;
 
     before(function(done) {
         gitNotifier = new GitNotifier();
@@ -28,125 +28,78 @@ describe('lib/gitNotifier', function() {
     });
 
     describe('cloneRepoIfNotExists', function() {
+        it('should clone repo into REPO_JAIL dir', async () => {
+            await gitNotifier.cloneRepoIfNotExists('https://github.com/barwin/git-notifications.git');
 
-        it('should clone repo into REPO_JAIL dir', function(done) {
-            gitNotifier.cloneRepoIfNotExists('https://github.com/barwin/git-notifications.git', function(err) {
-                assert.ifError(err);
-                fs.exists(gitNotifier.REPO_JAIL + '/git-notifications.git', function(exists) {
-                    exists.should.equal(true);
-                    done();
-                });
-            });
+            const exists = fs.existsSync(`${gitNotifier.REPO_JAIL}/git-notifications.git`);
+            exists.should.equal(true);
         });
 
-        it('should throw an error when the repo does not exist', function(done) {
-            gitNotifier.cloneRepoIfNotExists('file:///noexist', function(err) {
+        it('should throw an error when the repo does not exist', async () => {
+            const unexpectedErrMessage = 'should not get here, unexpected error';
+            try {
+                await gitNotifier.cloneRepoIfNotExists('file:///noexist');
+                throw new Error(unexpectedErrMessage);
+            }
+            catch (err) {
                 err.should.be.instanceof(Error);
+                err.message.should.not.equal(unexpectedErrMessage);
+            }
 
-                fs.exists(gitNotifier.REPO_JAIL + '/noexist', function(exists) {
-                    exists.should.equal(false);
-                    done();
-                });
-            });
+            const exists = fs.existsSync(`${gitNotifier.REPO_JAIL}/noexist`);
+            exists.should.equal(false);
         });
-
     });
 
     describe('checkForNewCommits', function() {
-
-        var tmpRepoOriginPath,
-            tmpRepoName = 'testRepo',
-            git;
+        let tmpRepoOriginPath;
+        const tmpRepoName = 'testRepo';
+        let git;
+        let gitExec;
 
         /**
          * Initialize a local repo with a single commit.
          */
-        before(function(done) {
-            temp.mkdir('test_checkForNewCommits', function(err, tmpDirPath) {
-                tmpRepoOriginPath = tmpDirPath + '/' + tmpRepoName;
-                fs.mkdirSync(tmpRepoOriginPath);
-                git = new Git({ 'git-dir': tmpRepoOriginPath + '/.git', cwd: tmpRepoOriginPath });
+        before(async () => {
+            const tmpDirPath = await Bluebird.fromCallback(cb => temp.mkdir('test_checkForNewCommits', cb));
 
-                ASQ()
-                    .then(function(next) {
-                        new Git().exec('init', {}, [ tmpRepoOriginPath ], function(err) {
-                            if (err) {
-                                console.error("Error during git init");
-                                return next.fail(err);
-                            }
-                            next();
-                        });
-                    })
-                    .then(function(next) {
-                        // Repo is init'd, do an initial commit.
-                        fs.writeFileSync(tmpRepoOriginPath+'/test.txt', 'Hello World');
+            tmpRepoOriginPath = `${tmpDirPath}/${tmpRepoName}`;
+            fs.mkdirSync(tmpRepoOriginPath);
+            git = new Git({ 'git-dir': `${tmpRepoOriginPath}/.git`, cwd: tmpRepoOriginPath });
+            gitExec = (cmd, opts, args) => {
+                return Bluebird.fromCallback(cb => git.exec(cmd, opts, args, cb));
+            };
 
-                        git.exec('add', {}, [ 'test.txt' ], function(err) {
-                            if (err) {
-                                console.error("Error during git add");
-                                return next.fail(err);
-                            }
-                            next();
-                        });
-                    })
-                    .then(function(next) {
-                        git.exec('commit', { 'm': "'First commit'" }, [], function(err) {
-                            if (err) {
-                                console.error("Error during git commit");
-                                return next.fail(err);
-                            }
-                            next();
-                        });
-                    })
-                    .val(function() {
-                        done(); // concludes before()
-                    })
-                    .or(function(err) {
-                        console.error("Error during git commands: " + err);
-                        throw err;
-                    });
-            });
+            // Initialie repo and add an initial commit
+            await gitExec('init', {}, [tmpRepoOriginPath]);
+            fs.writeFileSync(`${tmpRepoOriginPath}/test.txt`, 'Hello World');
+            await gitExec('add', {}, ['test.txt']);
+            await gitExec('commit', { m: "'First commit'" }, []);
         });
 
-        it('should clone local temp repo without error', function(done) {
-            gitNotifier.cloneRepoIfNotExists(tmpRepoOriginPath, function (err) {
-                assert.ifError(err);
-                fs.exists(gitNotifier.REPO_JAIL + '/' + tmpRepoName, function (exists) {
-                    exists.should.equal(true);
-                    done();
-                });
-            });
+        it('should clone local temp repo without error', async () => {
+            await gitNotifier.cloneRepoIfNotExists(tmpRepoOriginPath);
+            const exists = fs.existsSync(`${gitNotifier.REPO_JAIL}/${tmpRepoName}`);
+            exists.should.equal(true);
         });
 
-        it('should not find new commits with an initial clone repo', function(done) {
-            gitNotifier.checkForNewCommits(tmpRepoOriginPath, function(err, diff, localSha1, latestSha1) {
-                assert.ifError(err);
-                assert.equal(diff, undefined, 'Diff should be undefined');
-                assert.equal(latestSha1, undefined, 'LatestSha1 should be undefined');
-                done();
-            });
+        it('should not find new commits with an initial clone repo', async () => {
+            const { ansiLogAndDiff, remoteSha1 } = await gitNotifier.checkForNewCommits(tmpRepoOriginPath);
+            assert.equal(ansiLogAndDiff, undefined, 'Diff should be undefined');
+            assert.equal(remoteSha1, undefined, 'LatestSha1 should be undefined');
         });
 
-        it('add a test commit to the test repo', function(done) {
-            fs.writeFileSync(tmpRepoOriginPath + "/newfile", 'a new file!');
-            git.exec('add', {}, [ 'newfile' ], function(err) {
-                assert.ifError(err);
-                git.exec('commit', { m: "'Second Commit'" }, [], function(err) {
-                    assert.ifError(err);
-                    done();
-                });
-            });
-        });
+        it('should find new commits', async () => {
+            // Add a test commit that should get discovered
+            fs.writeFileSync(`${tmpRepoOriginPath}/newfile`, 'a new file!');
+            await gitExec('add', {}, ['newfile']);
+            await gitExec('commit', { m: "'Second Commit'" }, []);
 
-        it('should find new commits', function(done) {
-            gitNotifier.checkForNewCommits(tmpRepoOriginPath, function(err, diff, localSha1, latestSha1) {
-                assert.ifError(err);
-                diff.should.be.type('string');
-                latestSha1.should.be.type('string');
-                done();
-            });
+            const { ansiLogAndDiff, localSha1, remoteSha1 } = await gitNotifier.checkForNewCommits(tmpRepoOriginPath);
+            assert.ok(localSha1, 'localSha1 should be ok');
+            ansiLogAndDiff.should.be.type('string');
+            remoteSha1.should.be.type('string');
         });
-
     });
 
     describe('isGitHubRepo', function() {
@@ -154,10 +107,10 @@ describe('lib/gitNotifier', function() {
             [
                 'https://github.com/barwin/git-notifications.git',
                 'https://github.com/barwin/git-notifications',
-                'git@github.com:barwin/git-notifications.git'
+                'git@github.com:barwin/git-notifications.git',
             ]
                 .forEach(function(repoUrl) {
-                    assert.ok(gitNotifier.isGitHubRepo(repoUrl), 'true for github repo: ' + repoUrl);
+                    assert.ok(gitNotifier.isGitHubRepo(repoUrl), `true for github repo: ${repoUrl}`);
                 });
         });
 
@@ -165,37 +118,36 @@ describe('lib/gitNotifier', function() {
             [
                 'file:///Users/barwin/sites/test_repo',
                 'git@bitbucket.org:testuser/test_repo.git',
-                'https://testuser@bitbucket.org/testuser/notify_bot.git'
+                'https://testuser@bitbucket.org/testuser/notify_bot.git',
             ]
                 .forEach(function(repoUrl) {
-                    assert.equal(gitNotifier.isGitHubRepo(repoUrl), false, 'false for non-github repo: ' + repoUrl);
+                    assert.equal(gitNotifier.isGitHubRepo(repoUrl), false, `false for non-github repo: ${repoUrl}`);
                 });
         });
     });
 
     describe('getGitHubWebDiffUrl', function() {
-
-        var expectedCompareUrl = 'https://github.com/barwin/git-notifications/compare/foo...bar';
+        const expectedCompareUrl = 'https://github.com/barwin/git-notifications/compare/foo...bar';
 
         it('should get urls for ssh repoUrls', function() {
             assert.equal(
                 gitNotifier.getGitHubWebDiffUrl('git@github.com:barwin/git-notifications.git', 'foo', 'bar'),
-                expectedCompareUrl
-            )
+                expectedCompareUrl,
+            );
         });
 
         it('should get urls for https repoUrls with .git extension', function() {
             assert.equal(
                 gitNotifier.getGitHubWebDiffUrl('https://github.com/barwin/git-notifications.git', 'foo', 'bar'),
-                expectedCompareUrl
-            )
+                expectedCompareUrl,
+            );
         });
 
         it('should get urls for https repoUrls without .git extension', function() {
             assert.equal(
                 gitNotifier.getGitHubWebDiffUrl('https://github.com/barwin/git-notifications', 'foo', 'bar'),
-                expectedCompareUrl
-            )
+                expectedCompareUrl,
+            );
         });
     });
 

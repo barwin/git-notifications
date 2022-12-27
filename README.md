@@ -24,7 +24,7 @@ For Example:
             from: 'user@domain',
             to: 'your@recipients, another@recipient',
 
-            // https://github.com/andris9/nodemailer-smtp-transport#usage
+            // See https://nodemailer.com/smtp/
             smtpOptions: {
                 host: 'localhost',
                 port: 25,
@@ -38,7 +38,7 @@ For Example:
 
 # Running
 
-Just run the script with node:
+Run with node:
 
     node .
 
