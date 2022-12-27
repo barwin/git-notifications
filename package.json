@@ -17,9 +17,8 @@
     "config": "^3.3.8",
     "debug": "^4.3.4",
     "html-entities": "^1.1.2",
-    "nodemailer": "^6.8.0",
-    "underscore": "^1.7.0",
-    "underscore.string": "^3.0.2"
+    "lodash": "^4.17.21",
+    "nodemailer": "^6.8.0"
   },
   "devDependencies": {
     "eslint": "^8.30.0",
